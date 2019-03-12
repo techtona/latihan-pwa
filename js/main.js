@@ -12,24 +12,25 @@ $(document).ready(function () {
     // menampung semua gender dari API
     var gender = [];
 
-    $.get(_url,function (data) {
+    // $.get(_url,function (data) {
+    function renderPage(data) {
         $.each(data, function (key, items) {
             // untuk menampung gender sementara pd loop
             _gend = items.gender;
 
             // untuk memasukkan data ke result dari API
-            result += '<div>'+'<p><b>'+items.name+'</b></p>'+
-                '<p>'+_gend+'</p></div>';
+            result += '<div>' + '<p><b>' + items.name + '</b></p>' +
+                '<p>' + _gend + '</p></div>';
 
             // jika gender tidak ada didalam array gender,
             // maka masukkan gender opt
-            if ($.inArray(_gend, gender) === -1){
+            if ($.inArray(_gend, gender) === -1) {
                 // data gender di push untuk
                 // pengecekan itrasi berikutnya
                 gender.push(_gend);
                 // set gender_opt dgn <option>
-                gender_opt += '<option value="'+_gend+
-                    '">'+_gend+'</option>'
+                gender_opt += '<option value="' + _gend +
+                    '">' + _gend + '</option>'
             }
         });
 
@@ -41,8 +42,32 @@ $(document).ready(function () {
         // menggunakan selector ID gender-select,
         // kemudian replace html di dalam komponen yang
         // ada di id gender-select menjadi gender_opt
-        $('#gender-select').html('<option value="semua">semua</option>'+gender_opt);
+        $('#gender-select').html('<option value="semua">semua</option>' + gender_opt);
+        // });
+    }
+
+    var networkDataReceive = false;
+    /* cek di Cache, apakah sudah ada belum, ngambil data dari service online */
+    var networkUpdate = fetch(_url).then(function (response) {
+        return response.json();
+    }).then(function (data) {
+        networkDataReceive = true;
+        renderPage(data)
     });
+    
+    /*fetch data dari cache*/
+    caches.match(_url).then(function (response) {
+        if (!response) throw Error("no data on cache");
+        return response.json();
+    }).then(function (data) {
+        if (!networkDataReceive){
+            renderPage(data);
+            console.log('render data from cache');
+        }
+    }).catch(function () {
+        return networkUpdate;
+    })
+
 
     // filter untuk option gender
     $('#gender-select').on('change', function () {
